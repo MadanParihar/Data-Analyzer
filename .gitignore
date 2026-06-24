@@ -46,3 +46,9 @@ pnpm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Local test fixtures & ad-hoc scripts (not part of the app)
+test_data.json
+test_data.xlsx
+test_large_data.xlsx
+backend/test_large_data.xlsx

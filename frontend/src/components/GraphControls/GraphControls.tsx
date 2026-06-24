@@ -25,6 +25,7 @@ interface GraphControlsProps {
     onDateRangeChange: (range: { start: string, end: string }) => void;
     topN: number;
     onTopNChange: (val: number) => void;
+    onExportPNG?: () => void;
 }
 
 const GraphControls: React.FC<GraphControlsProps> = ({
@@ -36,7 +37,8 @@ const GraphControls: React.FC<GraphControlsProps> = ({
     showFilters, filterType,
     sortOrder, onSortChange,
     dateRange, onDateRangeChange,
-    topN, onTopNChange
+    topN, onTopNChange,
+    onExportPNG
 }) => {
     
     // Helper to parse column names for display
@@ -113,10 +115,20 @@ const GraphControls: React.FC<GraphControlsProps> = ({
                 ) : "Generate Graph"}
             </button>
 
+            {onExportPNG && !loading && (
+                <button
+                   className="btn-generate"
+                   onClick={onExportPNG}
+                   style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', marginTop: '8px' }}
+                >
+                    Export as PNG
+                </button>
+            )}
+
             {/* Smart Filters Area */}
             {showFilters && filterType !== 'none' && (
-                <div className="filters-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #374151' }}>
-                    <h4 style={{ marginBottom: '12px', fontSize: '0.9rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div className="filters-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+                    <h4 style={{ marginBottom: '12px', fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Smart Filters
                     </h4>
 
@@ -143,14 +155,14 @@ const GraphControls: React.FC<GraphControlsProps> = ({
                                     value={dateRange.start}
                                     onChange={(e) => onDateRangeChange({...dateRange, start: e.target.value})}
                                     className="graph-input"
-                                    style={{background:'#1f2937', border:'1px solid #374151', color:'white', padding:'6px', borderRadius:'4px'}}
+                                    style={{background:'var(--bg-secondary)', border:'1px solid var(--border-color)', color:'var(--text-primary)', padding:'6px', borderRadius:'var(--radius-sm)'}}
                                 />
                                 <input 
                                     type="date" 
                                     value={dateRange.end}
                                     onChange={(e) => onDateRangeChange({...dateRange, end: e.target.value})}
                                     className="graph-input"
-                                    style={{background:'#1f2937', border:'1px solid #374151', color:'white', padding:'6px', borderRadius:'4px'}}
+                                    style={{background:'var(--bg-secondary)', border:'1px solid var(--border-color)', color:'var(--text-primary)', padding:'6px', borderRadius:'var(--radius-sm)'}}
                                 />
                             </div>
                         </div>
@@ -169,9 +181,9 @@ const GraphControls: React.FC<GraphControlsProps> = ({
                                 step="5" 
                                 value={topN}
                                 onChange={(e) => onTopNChange(Number(e.target.value))}
-                                style={{width:'100%', accentColor:'#3b82f6'}}
+                                style={{width:'100%', accentColor:'var(--accent-primary)'}}
                             />
-                            <div style={{display:'flex', justifyContent:'space-between', fontSize:'0.75rem', color:'#9ca3af', marginTop:'4px'}}>
+                            <div style={{display:'flex', justifyContent:'space-between', fontSize:'0.75rem', color:'var(--text-muted)', marginTop:'4px'}}>
                                 <span>5</span>
                                 <span>100</span>
                             </div>

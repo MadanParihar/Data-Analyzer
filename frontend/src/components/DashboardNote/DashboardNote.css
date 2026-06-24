@@ -8,7 +8,7 @@
 }
 
 .note-error {
-    color: #ff4d4d;
+    color: var(--error);
     padding: 0.5rem;
     font-size: 0.9rem;
 }
@@ -38,18 +38,18 @@
 }
 
 .dashboard-note .ql-toolbar.ql-snow {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 6px 6px 0 0;
     font-family: inherit;
 }
 
 .dashboard-note .ql-container.ql-snow {
     flex: 1;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
     border-top: none;
     border-radius: 0 0 6px 6px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-primary);
     font-family: inherit;
     font-size: 0.95rem;
     color: var(--text-primary);
@@ -80,12 +80,12 @@
 
 .dashboard-note .ql-snow .ql-picker-options {
     background-color: var(--bg-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
 }
 
 .dashboard-note .ql-snow .ql-tooltip {
     background-color: var(--bg-elevated);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
     color: var(--text-primary);
 }
 
@@ -104,7 +104,7 @@
 
 /* Make placeholder text white/light so it's readable in dark mode */
 .dashboard-note .ql-editor.ql-blank::before {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: var(--text-muted) !important;
     font-style: italic;
 }
 
@@ -118,7 +118,7 @@
 }
 
 .note-content-display::-webkit-scrollbar-thumb {
-    background: rgba(27, 28, 80, 0.6);
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 
@@ -136,7 +136,7 @@
 }
 
 .dashboard-note .ql-editor::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 

@@ -1,16 +1,13 @@
 import axios from "axios";
 
-// Create a custom instance or configure the default one
-// We'll configure the default one for simplicity with existing code
-axios.defaults.baseURL = "http://localhost:8000/api";
+// Base URL is environment-driven so the app works beyond localhost.
+// Set VITE_API_URL at build/dev time; falls back to the local backend.
+axios.defaults.baseURL =
+  import.meta.env.VITE_API_URL ?? "http://localhost:5000/api";
 
 axios.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-    console.log(
-      "[Axios Interceptor] Token in storage:",
-      token ? "Found" : "Missing"
-    );
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -26,11 +23,14 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Dispatch logout action or clear storage if token is invalid
-      // For now, simpler to just clear storage
-      // localStorage.removeItem('token');
-      // localStorage.removeItem('user');
-      // window.location.href = '/';
+      // Clear storage if token is invalid or expired
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Redirect to auth page if not already there
+      if (window.location.pathname !== '/auth') {
+        window.location.href = '/auth';
+      }
     }
     return Promise.reject(error);
   }

@@ -14,3 +14,4 @@ class GraphState(TypedDict):
     restricted_columns: Optional[List[str]]
     intent: Optional[str]
     upload_id: Optional[str]
+    history: Optional[List[Any]]

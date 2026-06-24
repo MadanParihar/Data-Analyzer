@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import get_settings
+from app.core.config import get_settings, DEV_JWT_SECRET
 from app.db.mongo import db
+from app.api import auth, upload, sandbox, analyze, history, dashboard, notes, data
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 app = FastAPI(
@@ -11,12 +15,11 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# CORS Config
-origins = ["*"] # Adjust in production
-
+# CORS: restrict to the configured origins. Note that allow_credentials=True is
+# incompatible with a "*" wildcard per the CORS spec, so origins are explicit.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,7 +28,12 @@ app.add_middleware(
 # Startup/Shutdown events
 @app.on_event("startup")
 async def startup_event():
-    db.connect_to_database()
+    if settings.JWT_SECRET == DEV_JWT_SECRET:
+        logger.warning(
+            "JWT_SECRET is using the insecure development default. "
+            "Set a strong JWT_SECRET environment variable before deploying."
+        )
+    await db.connect_to_database()
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -34,8 +42,6 @@ async def shutdown_event():
 @app.get("/")
 def root():
     return {"message": "Welcome to Data Analyzer API"}
-
-from app.api import auth, upload, sandbox, analyze, history, dashboard, notes, data
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(upload.router, prefix="/api", tags=["upload"])

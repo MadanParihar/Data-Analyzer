@@ -1,0 +1,47 @@
+services:
+
+  mongodb:
+    image: mongodb/mongodb-community-server:8.0-ubi8-slim
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    # Loads JWT_SECRET, GOOGLE_API_KEY, SMTP_*, etc. Create it from backend/.env.example.
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override to point at the compose MongoDB service (wins over env_file).
+      MONGODB_URI: mongodb://mongodb:27017/data-analyzer
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the static build; the browser calls the host-mapped backend.
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

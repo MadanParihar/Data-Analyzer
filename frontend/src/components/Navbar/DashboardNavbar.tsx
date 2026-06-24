@@ -1,8 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { User, BarChart3, History as HistoryIcon, Plus, Database, PieChart, Settings } from 'lucide-react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../store';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 
 interface DashboardNavbarProps {
@@ -44,13 +42,10 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ onOpenSidebar }) => {
         }}>
             {/* Left: Brand & Nav Links */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-                <div 
-                    onClick={() => navigate('/')}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-                >
-                    <Database size={28} color="var(--accent-primary)" />
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-                        DataAnalyser<span style={{ color: 'var(--accent-primary)' }}>.</span>
+                <div className="brand" onClick={() => navigate('/')}>
+                    <div className="brand-badge"><Database size={18} /></div>
+                    <span className="brand-name">
+                        DataAnalyser<span>.</span>
                     </span>
                 </div>
 

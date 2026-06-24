@@ -1,7 +1,8 @@
 import React from 'react';
 import {
     BarChart, Bar, LineChart, Line,
-    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
+    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area,
+    PieChart, Pie, Cell
 } from 'recharts';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -11,27 +12,36 @@ interface GraphChartProps {
     xAxis: string;
     yAxis: string;
     enableAnimation?: boolean;
+    chartRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 
-const GraphChart: React.FC<GraphChartProps> = ({ data, chartType, yAxis, enableAnimation = true }) => {
+const GraphChart: React.FC<GraphChartProps> = ({ data, chartType, yAxis, enableAnimation = true, chartRef }) => {
     const { theme } = useTheme();
 
     if (!data || data.length === 0) {
         return <div className="graph-placeholder">No data to display</div>;
     }
 
-    // Dynamic Colors based on theme
+    // Dynamic Colors based on theme (Electric Violet / zinc neutrals)
     const isDark = theme === 'dark';
     const chartColors = {
-        stroke: isDark ? "#9ca3af" : "#64748b",
-        grid: isDark ? "#374151" : "#e2e8f0",
-        tooltipBg: isDark ? "#1f2937" : "#ffffff",
-        tooltipBorder: isDark ? "#374151" : "#e2e8f0",
-        text: isDark ? "#f8fafc" : "#0f172a",
-        accent: isDark ? "#3b82f6" : "#2563eb",
-        secondary: isDark ? "#10b981" : "#059669"
+        stroke: isDark ? "#a1a1aa" : "#71717a",
+        grid: isDark ? "#27272a" : "#e4e4e7",
+        tooltipBg: isDark ? "#18181b" : "#ffffff",
+        tooltipBorder: isDark ? "#3f3f46" : "#e4e4e7",
+        text: isDark ? "#fafafa" : "#18181b",
+        accent: isDark ? "#8b7cff" : "#6d5efc",
+        secondary: isDark ? "#34d399" : "#059669"
     };
+
+    // Pie slice palette — violet accent first, then complementary hues
+    const pieColors = isDark
+        ? ["#8b7cff", "#34d399", "#fbbf24", "#22d3ee", "#fb7185", "#a78bfa", "#4ade80", "#f97316"]
+        : ["#6d5efc", "#059669", "#d97706", "#0891b2", "#e11d48", "#7c3aed", "#16a34a", "#ea580c"];
+
+    const isPie = chartType === 'pie';
+    const stripKey = (val: any) => (typeof val === 'string' ? val.split('__')[0] : val);
 
     const CommonProps = {
         data: data,
@@ -143,19 +153,74 @@ const GraphChart: React.FC<GraphChartProps> = ({ data, chartType, yAxis, enableA
                         />
                     </AreaChart>
                 );
+            case 'pie': {
+                // Aggregate rows by category label (sum values) so each unique
+                // category is a single slice instead of one slice per row.
+                const totals = new Map<string, number>();
+                data.forEach((d) => {
+                    const name = stripKey(d._uniqueKey ?? d[yAxis]);
+                    const val = Number(d[yAxis]) || 0;
+                    totals.set(name, (totals.get(name) ?? 0) + val);
+                });
+
+                let slices = Array.from(totals, ([name, value]) => ({ name, value }))
+                    .sort((a, b) => b.value - a.value);
+
+                // Keep the largest slices readable; roll the rest into "Other".
+                const MAX_SLICES = 8;
+                if (slices.length > MAX_SLICES) {
+                    const top = slices.slice(0, MAX_SLICES);
+                    const other = slices.slice(MAX_SLICES).reduce((s, e) => s + e.value, 0);
+                    if (other > 0) top.push({ name: 'Other', value: other });
+                    slices = top;
+                }
+
+                return (
+                    <PieChart>
+                        <Pie
+                            data={slices}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius="70%"
+                            isAnimationActive={enableAnimation}
+                            label={({ percent }) => ((percent ?? 0) >= 0.03 ? `${((percent ?? 0) * 100).toFixed(0)}%` : '')}
+                            labelLine={false}
+                        >
+                            {slices.map((s, index) => (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={s.name === 'Other' ? chartColors.stroke : pieColors[index % pieColors.length]}
+                                />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: chartColors.tooltipBg,
+                                borderRadius: '8px',
+                                border: `1px solid ${chartColors.tooltipBorder}`,
+                                color: chartColors.text
+                            }}
+                            itemStyle={{ color: chartColors.text }}
+                        />
+                        <Legend wrapperStyle={{ paddingTop: '16px', fontSize: '12px' }} />
+                    </PieChart>
+                );
+            }
             default:
                 return null;
         }
     };
 
     return (
-        <div className="graph-scroll-wrapper">
-            <div 
-                className="graph-scroll-inner" 
-                style={{ 
-                    minWidth: '100%', 
-                    width: `${dynamicWidth}px`, 
-                    height: '100%' 
+        <div className="graph-scroll-wrapper" ref={chartRef}>
+            <div
+                className="graph-scroll-inner"
+                style={{
+                    minWidth: '100%',
+                    width: isPie ? '100%' : `${dynamicWidth}px`,
+                    height: '100%'
                 }}
             >
                 <ResponsiveContainer width="100%" height="100%">

@@ -1,14 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { 
-    BarChart3, 
-    Database, 
-    Sparkles, 
-    Zap, 
-    Shield, 
-    ArrowRight, 
-    CheckCircle2,
+import {
+    Database,
+    Sparkles,
+    Zap,
+    Shield,
+    ArrowRight,
     LayoutDashboard,
     TrendingUp,
     Globe
@@ -67,7 +65,7 @@ const LandingPage: React.FC = () => {
                                 <div className="window-address">data-analyser.io/dashboard</div>
                             </div>
                             <div className="preview-content">
-                                <img src="https://images.unsplash.com/photo-1551288049-bbbda5366392?auto=format&fit=crop&q=80&w=2070" alt="Dashboard Preview" />
+                                <img src="/dashboard_mockup.png" alt="Dashboard Preview" />
                                 <div className="preview-overlay">
                                     <div className="overlay-card">
                                         <TrendingUp size={24} color="var(--accent-primary)" />

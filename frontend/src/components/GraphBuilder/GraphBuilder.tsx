@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
-import { Save, Pin, BarChart2, TrendingUp } from 'lucide-react';
+import { Save, Pin, BarChart2, TrendingUp, Download, PieChart } from 'lucide-react';
 import axios from '../../api/axiosConfig';
+import { toPng } from 'html-to-image';
 import './GraphBuilder.css';
 import GraphControls from '../GraphControls/GraphControls';
 import GraphChart from '../GraphChart/GraphChart';
@@ -13,10 +14,12 @@ const CHART_TYPES = [
     { id: 'bar', label: 'Bar Chart', icon: BarChart2 },
     { id: 'line', label: 'Line Chart', icon: TrendingUp },
     { id: 'area', label: 'Area Chart', icon: TrendingUp },
+    { id: 'pie', label: 'Pie Chart', icon: PieChart },
 ];
 
 const GraphBuilder: React.FC = () => {
     const { uploadId } = useParams<{ uploadId: string }>();
+    const chartRef = useRef<HTMLDivElement>(null);
     // const navigate = useNavigate();
     const location = useLocation();
     const { currentUploadId } = useSelector((state: RootState) => state.app);
@@ -298,6 +301,46 @@ const GraphBuilder: React.FC = () => {
         }
     };
 
+    const handleExportPNG = async () => {
+        if (!chartRef.current) return;
+        const container = chartRef.current;
+
+        try {
+            // Resolve background based on theme (handles transparency)
+            const isDark = document.documentElement.classList.contains('dark');
+            const bgColor = isDark ? '#09090b' : '#fbfbfc';
+
+            // Wait a frame to ensure any UI state changes have rendered
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const dataUrl = await toPng(container, {
+                cacheBust: true,
+                backgroundColor: bgColor,
+                pixelRatio: window.devicePixelRatio || 2, // Ensure crisp retina output
+                style: {
+                    // Ensure no scrollbars or overflow clipping artifacts
+                    overflow: 'hidden'
+                },
+                filter: (node) => {
+                    // Exclude any interactive elements that shouldn't be in the PNG if needed
+                    return !((node as HTMLElement).classList && (node as HTMLElement).classList.contains('exclude-from-export'));
+                }
+            });
+
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `chart-${xAxis}-vs-${yAxis}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            setToast({ msg: 'Export successful!', type: 'success' });
+        } catch (err) {
+            console.error('Export failed:', err);
+            setToast({ msg: 'Export failed — could not render image', type: 'error' });
+        }
+    };
+
     return (
         <div className="graph-page">
             {toast && (
@@ -314,6 +357,9 @@ const GraphBuilder: React.FC = () => {
                 <div className="header-actions">
                     {graphData.length > 0 && (
                         <>
+                            <button onClick={handleExportPNG} className="btn-back">
+                                <Download size={16} /> Export PNG
+                            </button>
                             <button onClick={handleSaveGraph} className="btn-back">
                                 <Save size={16} /> Save to Library
                             </button>
@@ -349,6 +395,7 @@ const GraphBuilder: React.FC = () => {
                     onDateRangeChange={setDateRange}
                     topN={topN}
                     onTopNChange={setTopN}
+                    onExportPNG={handleExportPNG}
                 />
 
                 {/* Main Chart Area */}
@@ -362,6 +409,7 @@ const GraphBuilder: React.FC = () => {
                                 chartType={chartType}
                                 xAxis={xAxis}
                                 yAxis={yAxis}
+                                chartRef={chartRef}
                             />
                         </div>
                     )}

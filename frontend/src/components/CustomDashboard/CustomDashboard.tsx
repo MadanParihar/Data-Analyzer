@@ -4,7 +4,7 @@ import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import axios from '../../api/axiosConfig';  // One level deeper
 import { debounce } from 'lodash';
-import { Save, Trash2, BarChart2, FileText, Sparkles, Pin, Printer, Edit3, X } from 'lucide-react';
+import { Save, Trash2, BarChart2, FileText, Sparkles, Pin, Printer, Edit3, X, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
@@ -321,10 +321,54 @@ const CustomDashboard: React.FC = () => {
         }
     }, [toast]);
 
+    const exportSvgFromContainer = (container: HTMLElement, filename: string) => {
+        const svg = container.querySelector('svg');
+        if (!svg) return;
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = svg.clientWidth || 800;
+            canvas.height = svg.clientHeight || 400;
+            const ctx = canvas.getContext('2d')!;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(url);
+            canvas.toBlob((blob) => {
+                if (!blob) return;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `dashboard-chart-${filename}.png`;
+                a.click();
+            }, 'image/png');
+        };
+        img.src = url;
+    };
+
+    const handleExportDashboardChart = (itemId: string) => {
+        const card = document.querySelector(`[data-grid-id="${itemId}"] .graph-scroll-wrapper`);
+        if (!card) {
+            // Fallback: find by iterating dashboard-item elements
+            const items = document.querySelectorAll('.dashboard-item');
+            for (const el of Array.from(items)) {
+                if (el.getAttribute('data-grid')?.includes(itemId) ||
+                    el.querySelector(`[data-item-id="${itemId}"]`)) {
+                    exportSvgFromContainer(el as HTMLElement, itemId);
+                    return;
+                }
+            }
+            return;
+        }
+        exportSvgFromContainer(card as HTMLElement, itemId);
+    };
+
     const renderItemContent = (item: DashboardItem) => {
         if (item.type === 'graph') {
             return (
-                <div style={{ width: '100%', height: '100%', flex: 1, minHeight: 0 }}>
+                <div style={{ width: '100%', height: '100%', flex: 1, minHeight: 0 }} data-item-id={item.id}>
                     {item.content?.data ? (
                         <GraphChart
                             data={item.content.data}
@@ -421,9 +465,9 @@ const CustomDashboard: React.FC = () => {
                                                 left: 0,
                                                 right: 0,
                                                 height: `${PAGE_HEIGHT}px`,
-                                                border: '1px dashed rgba(84, 101, 255, 0.3)', // Subtle dashed border
-                                                borderBottom: i === numPages - 1 ? '1px dashed rgba(84, 101, 255, 0.3)' : '2px dashed rgba(84, 101, 255, 0.5)', // Theme dash for breaks
-                                                background: 'rgba(255, 255, 255, 0.01)', // Very subtle highlight
+                                                border: '1px dashed rgba(var(--accent-rgb), 0.25)', // Subtle dashed border
+                                                borderBottom: i === numPages - 1 ? '1px dashed rgba(var(--accent-rgb), 0.25)' : '2px dashed rgba(var(--accent-rgb), 0.45)', // Theme dash for breaks
+                                                background: 'transparent', // Very subtle highlight
                                                 zIndex: 0,
                                                 pointerEvents: 'none',
                                                 boxSizing: 'border-box',
@@ -434,12 +478,13 @@ const CustomDashboard: React.FC = () => {
                                             }}
                                         >
                                             <span style={{
-                                                color: 'rgba(255, 255, 255, 0.3)',
+                                                color: 'var(--text-muted)',
                                                 fontSize: '12px',
                                                 fontWeight: 500,
-                                                background: 'rgba(0,0,0,0.3)',
+                                                background: 'var(--bg-tertiary)',
+                                                border: '1px solid var(--border-color)',
                                                 padding: '4px 8px',
-                                                borderRadius: '4px'
+                                                borderRadius: 'var(--radius-sm)'
                                             }}>
                                                 Page {i + 1}
                                             </span>
@@ -462,7 +507,7 @@ const CustomDashboard: React.FC = () => {
                                 preventCollision={false}
                             >
                                 {items.map(item => (
-                                    <div key={item.id} className={`dashboard-item ${item.type}-item`} data-grid={item.layout}>
+                                    <div key={item.id} className={`dashboard-item ${item.type}-item`} data-grid={item.layout} data-item-id={item.id}>
                                         <div className="dashboard-card-inner glass-panel">
                                             <div className="item-header drag-handle">
                                                 {editingTitleId === item.id ? (
@@ -496,7 +541,7 @@ const CustomDashboard: React.FC = () => {
                                                             onClick={() => handleAnalyzeGraph(item)}
                                                             className="btn-icon-sm"
                                                             title="Analyze Graph with AI"
-                                                            style={{ color: '#3b82f6' }} // Blue tint
+                                                            style={{ color: 'var(--accent-primary)' }} // Accent tint
                                                             disabled={analyzingItems.has(item.id)}
                                                         >
                                                             {analyzingItems.has(item.id) ? (
@@ -506,6 +551,17 @@ const CustomDashboard: React.FC = () => {
                                                                     <Sparkles size={14} /> Analyze
                                                                 </>
                                                             )}
+                                                        </button>
+                                                    )}
+                                                    {item.type === 'graph' && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleExportDashboardChart(item.id); }}
+                                                            className="btn-icon-sm"
+                                                            title="Export chart as PNG"
+                                                            style={{ color: '#10b981' }}
+                                                            onMouseDown={(e) => e.stopPropagation()}
+                                                        >
+                                                            <Download size={14} /> PNG
                                                         </button>
                                                     )}
                                                     {(item.type === 'text' || item.type === 'title') && (

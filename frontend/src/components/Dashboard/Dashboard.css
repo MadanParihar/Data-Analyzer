@@ -67,7 +67,7 @@
 .btn-new-upload:hover {
   background: var(--accent-primary);
   color: white;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.30);
 }
 
 /* Tables */
@@ -173,9 +173,9 @@
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-secondary);
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
@@ -201,7 +201,7 @@
 
 .th-checkbox:hover {
   border-color: var(--accent-primary);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-tertiary);
 }
 
 /* Pagination */
@@ -223,9 +223,14 @@
 }
 
 .pagination-btn:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
   cursor: pointer;
+}
+
+.pagination-btn:not(:disabled):hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
 }
 
 .pagination-btn:disabled {
@@ -352,12 +357,11 @@
 }
 
 .chip {
-  background: rgba(59, 130, 246, 0.2);
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  color: #93c5fd;
-  /* Light solid blue for readability */
+  background: var(--accent-light);
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  color: var(--accent-primary);
   padding: 4px 10px;
-  border-radius: 16px;
+  border-radius: 100px;
   font-size: 13px;
   font-weight: 500;
   display: flex;
@@ -377,18 +381,17 @@
   width: 100%;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 10px 20px;
+  border-radius: var(--radius-xl);
+  padding: 8px 12px 8px 20px;
   display: flex;
   align-items: center;
   box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(20px);
-  transition: all 0.3s ease;
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
 }
 
 .input-wrapper:focus-within {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px var(--accent-light), var(--shadow-lg);
+  box-shadow: 0 0 0 3px var(--accent-ring), var(--shadow-lg);
 }
 
 .query-input {
@@ -405,7 +408,7 @@
 .btn-send {
   background: var(--accent-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   width: 36px;
   height: 36px;
   display: flex;
@@ -413,6 +416,11 @@
   justify-content: center;
   cursor: pointer;
   color: white;
+  transition: background var(--dur) var(--ease-out);
+}
+
+.btn-send:not(:disabled):hover {
+  background: var(--accent-secondary);
 }
 
 .btn-send:disabled {
@@ -423,19 +431,19 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--dur) var(--ease-out);
 }
 
 .btn-copy:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--accent-primary);
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
   color: var(--text-primary);
 }
 
@@ -463,13 +471,13 @@
 }
 
 .modal-content {
-  background: #0f111a;
+  background: var(--bg-elevated);
   width: 400px;
   padding: 30px;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
 }
 
 .modal-content h3 {
@@ -492,18 +500,19 @@
 }
 
 .btn-cancel {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--dur) var(--ease-out);
   font-weight: 500;
 }
 
 .btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
 }
 
 .btn-confirm-delete {

@@ -106,7 +106,7 @@
 }
 
 .dashboard-item .item-content::-webkit-scrollbar-thumb {
-    background: rgba(27, 28, 80, 0.6);
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 
@@ -128,16 +128,16 @@
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
     border: 1px solid var(--accent-primary);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     padding: 2px 6px;
     outline: none;
     width: 60%;
     min-width: 150px;
     margin-left: -6px;
     /* Offset padding to make it align with old text */
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 .item-content {
@@ -203,21 +203,20 @@
     align-items: center;
     gap: 8px;
     padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all var(--dur) var(--ease-out);
 }
 
 .btn-action:hover {
-    background: rgba(59, 130, 246, 0.2);
+    background: var(--accent-light);
     border-color: var(--accent-primary);
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
-    /* transform: translateY(-1px); */
+    color: var(--accent-primary);
 }
 
 .btn-back {
@@ -226,19 +225,18 @@
     gap: 6px;
     font-size: 0.9rem;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
     cursor: pointer;
     padding: 6px 12px;
-    border-radius: 6px;
-    transition: all 0.2s;
+    border-radius: var(--radius-md);
+    transition: all var(--dur) var(--ease-out);
 }
 
 .btn-back:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-elevated);
     color: var(--text-primary);
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    border-color: var(--border-strong);
 }
 
 .saving-indicator {
@@ -283,10 +281,10 @@
 
 /* React Grid Layout Overrides */
 .react-grid-item.react-grid-placeholder {
-    background: rgba(59, 130, 246, 0.1) !important;
+    background: var(--accent-light) !important;
     border: 1px dashed var(--accent-primary) !important;
-    border-radius: 8px !important;
-    opacity: 0.5 !important;
+    border-radius: var(--radius-lg) !important;
+    opacity: 0.6 !important;
 }
 
 .react-resizable-handle {
@@ -322,13 +320,13 @@
 }
 
 .modal-content {
-    background: var(--bg-secondary);
+    background: var(--bg-elevated);
     width: 440px;
     padding: 32px;
     text-align: center;
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     position: relative;
     overflow: hidden;
 }
@@ -336,10 +334,10 @@
 .modal-content h3 {
     margin-top: 0;
     color: var(--text-primary);
-    font-size: 22px;
-    font-weight: 800;
+    font-size: 20px;
+    font-weight: 700;
     margin-bottom: 12px;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.02em;
 }
 
 .modal-content p {
@@ -356,18 +354,19 @@
 }
 
 .btn-cancel {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
     color: var(--text-primary);
     padding: 10px 20px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all var(--dur) var(--ease-out);
     font-weight: 500;
 }
 
 .btn-cancel:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
 }
 
 .btn-confirm-delete {
@@ -391,28 +390,23 @@
     position: relative;
     bottom: 8px;
     left: 10px;
-    background: rgba(59, 130, 246, 0.1);
-    /* Blue tint background */
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    /* Blue border */
-    color: var(--text-secondary);
-    border-radius: 8px;
-    /* Slightly rounded corners like the image */
+    background: var(--accent-light);
+    border: 1px solid rgba(var(--accent-rgb), 0.30);
+    color: var(--accent-primary);
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all var(--dur) var(--ease-out);
     width: 32px;
     height: 32px;
 }
 
 .btn-save-icon:hover {
-    color: rgb(255, 255, 255);
+    color: #fff;
     background: var(--accent-primary);
-    /* Blue primary */
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
-    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.35);
 }
 
 .btn-save-icon:active {
@@ -442,10 +436,8 @@
 .spinner-sm {
     width: 14px;
     height: 14px;
-    border: 2px solid rgba(59, 130, 246, 0.3);
-    /* Blue tint base */
-    border-top-color: #3b82f6;
-    /* Blue active */
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent-primary);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     display: inline-block;
@@ -490,7 +482,7 @@
 
 .modal-header {
     padding: 16px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -514,7 +506,7 @@
 }
 
 .btn-close-modal:hover {
-    color: white;
+    color: var(--text-primary);
 }
 
 .modal-body.editor-container {
@@ -528,7 +520,7 @@
 
 .modal-footer {
     padding: 16px 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;

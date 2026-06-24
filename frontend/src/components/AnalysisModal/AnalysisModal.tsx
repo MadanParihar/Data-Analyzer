@@ -65,7 +65,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, tableNam
                         </div>
                         <div>
                             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>AI Deep Dive</h2>
-                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Analyzing <span style={{ color: 'white' }}>{tableName}</span></p>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Analyzing <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{tableName}</span></p>
                         </div>
                     </div>
                     <button
@@ -92,7 +92,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, tableNam
                             <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Looking for patterns and anomalies</p>
                         </div>
                     ) : error ? (
-                        <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', borderRadius: '8px' }}>
+                        <div style={{ padding: '20px', background: 'var(--error-light)', color: 'var(--error)', borderRadius: 'var(--radius-md)' }}>
                             <AlertTriangle size={20} style={{ marginBottom: '8px' }} />
                             <br />
                             {error}
@@ -100,7 +100,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, tableNam
                     ) : analysis ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                             {/* Summary */}
-                            <div className="glass-card" style={{ padding: '16px', borderLeft: '3px solid var(--accent-primary)' }}>
+                            <div className="glass-card" style={{ padding: '16px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--accent-primary)' }}>
                                 <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', color: 'var(--accent-primary)' }}>Summary</h3>
                                 <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-primary)' }}>
                                     {analysis.summary}
@@ -142,11 +142,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, tableNam
                                     {analysis.questions.map((q: string, i: number) => (
                                         <div key={i} style={{
                                             padding: '12px',
-                                            background: 'rgba(255,255,255,0.05)',
-                                            borderRadius: '8px',
+                                            background: 'var(--bg-tertiary)',
+                                            borderRadius: 'var(--radius-md)',
                                             fontSize: '13px',
                                             cursor: 'default',
-                                            border: '1px solid transparent',
+                                            border: '1px solid var(--border-color)',
                                             transition: 'all 0.2s',
                                             display: 'flex',
                                             justifyContent: 'space-between',
@@ -155,11 +155,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, tableNam
                                         }}
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                                                e.currentTarget.style.background = 'var(--bg-elevated)';
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.currentTarget.style.borderColor = 'transparent';
-                                                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                                e.currentTarget.style.background = 'var(--bg-tertiary)';
                                             }}
                                         >
                                             <span style={{ flex: 1 }}>{q}</span>
@@ -173,7 +173,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, tableNam
                                                     background: 'transparent',
                                                     border: 'none',
                                                     cursor: 'pointer',
-                                                    color: copiedIndex === i ? '#4ade80' : 'rgba(255,255,255,0.5)'
+                                                    color: copiedIndex === i ? 'var(--success)' : 'var(--text-muted)'
                                                 }}
                                             >
                                                 {copiedIndex === i ? <Check size={16} /> : <Copy size={16} />}

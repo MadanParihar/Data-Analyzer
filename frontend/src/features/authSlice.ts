@@ -11,7 +11,6 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   error: string | null;
-  pendingVerificationEmail: string | null;
 }
 
 // Initial state: Try to load from localStorage
@@ -23,46 +22,37 @@ const initialState: AuthState = {
   token: storedToken || null,
   loading: false,
   error: null,
-  pendingVerificationEmail: null,
+};
+
+const extractAuthError = (error: any, fallback: string): string => {
+  const detail = error.response?.data?.detail;
+  if (Array.isArray(detail)) return detail[0]?.msg || fallback;
+  if (typeof detail === "string") return detail;
+  if (error.response?.data?.message) return error.response.data.message;
+  return fallback;
 };
 
 // Async Thunks
 export const loginUser = createAsyncThunk(
   "auth/login",
-  async ({ email, password }: any, { rejectWithValue }) => {
+  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        "/auth/login",
-        { email, password }
-      );
+      const response = await axios.post("/auth/login", { email, password });
       return response.data;
     } catch (error: any) {
-      if (error.response && error.response.status === 403) {
-        return rejectWithValue({
-          message: error.response.data?.detail || "Email not verified",
-          status: 403,
-          email
-        });
-      }
-      return rejectWithValue({
-        message: error.response?.data?.detail || error.response?.data?.message || "Login failed",
-        status: error.response?.status
-      });
+      return rejectWithValue(extractAuthError(error, "Login failed"));
     }
   }
 );
 
 export const signupUser = createAsyncThunk(
   "auth/signup",
-  async ({ email, password }: any, { rejectWithValue }) => {
+  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        "/auth/signup",
-        { email, password }
-      );
+      const response = await axios.post("/auth/signup", { email, password });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Signup failed");
+      return rejectWithValue(extractAuthError(error, "Signup failed"));
     }
   }
 );
@@ -75,45 +65,31 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.error = null;
-      state.pendingVerificationEmail = null;
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     },
     clearError: (state) => {
       state.error = null;
     },
-    setLoginData: (state, action) => {
-      state.token = action.payload.token;
-      state.user = action.payload.user;
-      state.pendingVerificationEmail = null;
-      localStorage.setItem("token", action.payload.token);
-      localStorage.setItem("user", JSON.stringify(action.payload.user));
-    },
-    clearPendingVerification: (state) => {
-      state.pendingVerificationEmail = null;
-    }
   },
   extraReducers: (builder) => {
+    const applyAuthSuccess = (state: AuthState, action: any) => {
+      state.loading = false;
+      state.token = action.payload.token;
+      state.user = action.payload.user;
+      localStorage.setItem("token", action.payload.token);
+      localStorage.setItem("user", JSON.stringify(action.payload.user));
+    };
+
     // Login
     builder.addCase(loginUser.pending, (state) => {
       state.loading = true;
       state.error = null;
     });
-    builder.addCase(loginUser.fulfilled, (state, action) => {
+    builder.addCase(loginUser.fulfilled, applyAuthSuccess);
+    builder.addCase(loginUser.rejected, (state, action) => {
       state.loading = false;
-      state.token = action.payload.token;
-      state.user = action.payload.user;
-      localStorage.setItem("token", action.payload.token);
-      localStorage.setItem("user", JSON.stringify(action.payload.user));
-    });
-    builder.addCase(loginUser.rejected, (state, action: any) => {
-      state.loading = false;
-      if (action.payload?.status === 403) {
-        state.pendingVerificationEmail = action.payload.email;
-        state.error = null;
-      } else {
-        state.error = action.payload?.message || "Login failed";
-      }
+      state.error = (action.payload as string) || "Login failed";
     });
 
     // Signup
@@ -121,23 +97,13 @@ const authSlice = createSlice({
       state.loading = true;
       state.error = null;
     });
-    builder.addCase(signupUser.fulfilled, (state, action) => {
-      state.loading = false;
-      if (action.payload.status === "pending_verification") {
-        state.pendingVerificationEmail = action.payload.email;
-      } else {
-        state.token = action.payload.token;
-        state.user = action.payload.user;
-        localStorage.setItem("token", action.payload.token);
-        localStorage.setItem("user", JSON.stringify(action.payload.user));
-      }
-    });
+    builder.addCase(signupUser.fulfilled, applyAuthSuccess);
     builder.addCase(signupUser.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.payload as string;
+      state.error = (action.payload as string) || "Signup failed";
     });
   },
 });
 
-export const { logout, clearError, setLoginData, clearPendingVerification } = authSlice.actions;
+export const { logout, clearError } = authSlice.actions;
 export default authSlice.reducer;

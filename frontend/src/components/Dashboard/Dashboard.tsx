@@ -147,7 +147,7 @@ const PaginatedTable = ({
                         onClick={() => onAnalyze(tableName)}
                         className="btn-delete"
                         title="AI Deep Dive Analysis"
-                        style={{ color: 'var(--accent-primary)', borderColor: 'rgba(59, 130, 246, 0.3)', background: 'rgba(59, 130, 246, 0.1)' }}
+                        style={{ color: 'var(--accent-primary)', borderColor: 'rgba(var(--accent-rgb), 0.30)', background: 'var(--accent-light)' }}
                     >
                         <Sparkles size={14} style={{ marginRight: 4 }} /> Analyze
                     </button>
@@ -492,7 +492,7 @@ const Dashboard: React.FC = () => {
                         <button
                             onClick={handleAnalyzeSelected}
                             className="btn-history"
-                            style={{ borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59, 130, 246, 0.1)' }}
+                            style={{ borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'var(--accent-light)' }}
                         >
                             <Sparkles size={16} style={{ marginRight: 6 }} /> Analyze Selected ({selectedTables.size})
                         </button>
@@ -631,7 +631,7 @@ const Dashboard: React.FC = () => {
                                                 })}
                                                 title="Visualize this result"
                                                 className="btn-delete"
-                                                style={{ color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', background: 'rgba(59, 130, 246, 0.1)' }}
+                                                style={{ color: 'var(--accent-primary)', borderColor: 'rgba(var(--accent-rgb), 0.25)', background: 'var(--accent-light)' }}
                                             >
                                                 <BarChart2 size={14} />
                                             </button>
@@ -654,8 +654,12 @@ const Dashboard: React.FC = () => {
 
                                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <CheckCircle2 className="icon-success" />
-                                        <h3>Query Result</h3>
+                                        {item.validation === false ? (
+                                            <AlertCircle className="icon-empty" />
+                                        ) : (
+                                            <CheckCircle2 className="icon-success" />
+                                        )}
+                                        <h3>{item.validation === false ? "Couldn't answer" : "Query Result"}</h3>
                                     </div>
                                     {/* Unified Copy button in header */}
                                     {typeof item.answer === 'string' ? (
@@ -672,7 +676,12 @@ const Dashboard: React.FC = () => {
                                     ) : null}
                                 </div>
                                 <div className="result-content">
-                                    {typeof item.answer === "string" ? (
+                                    {item.validation === false ? (
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', color: 'var(--text-secondary)' }}>
+                                            <AlertCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} />
+                                            <span>{item.feedback || "The query couldn't be answered. Try rephrasing your question."}</span>
+                                        </div>
+                                    ) : typeof item.answer === "string" ? (
                                         <p>{item.answer}</p>
                                     ) : Array.isArray(item.answer) && item.answer.length > 0 ? (
                                         <PaginatedResultTable data={item.answer} />
@@ -698,7 +707,7 @@ const Dashboard: React.FC = () => {
                     {(selectedColumns.size > 0 || selectedTables.size > 0) && (
                         <div className="chips-container">
                             {Array.from(selectedTables).map(tableName => (
-                                <div key={`tbl:${tableName}`} className="chip table-chip" style={{ background: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.4)' }}>
+                                <div key={`tbl:${tableName}`} className="chip table-chip" style={{ background: 'var(--accent-light)', borderColor: 'rgba(var(--accent-rgb), 0.35)' }}>
                                     <Table size={12} style={{ marginRight: 4 }} />
                                     <span>{tableName}</span>
                                     <button onClick={() => toggleTableSelection(tableName)} className="chip-remove">×</button>

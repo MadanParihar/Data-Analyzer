@@ -80,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               transition: 'background 0.2s'
             }}
             onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                e.currentTarget.style.background = 'var(--bg-tertiary)';
                 e.currentTarget.style.color = 'var(--text-primary)';
             }}
             onMouseLeave={(e) => {
@@ -161,7 +161,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                             }}
                             onMouseEnter={(e) => {
                                 if (!active) {
-                                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
                                     e.currentTarget.style.color = 'var(--text-primary)';
                                 }
                             }}

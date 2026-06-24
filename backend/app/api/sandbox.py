@@ -44,19 +44,36 @@ async def sandbox(
     if not os.path.exists(local_path):
          await upload_service.retrieve_db_from_mongo(db_path, req.uploadId, db)
     
-    # 2. Get Schema if not provided
-    active_schema = req.schema
-    if not active_schema:
-        state = upload_service.get_database_state(db_path)
-        active_schema = state["schema"]
-    
     # 3. Invoke Agent or Just Return State
     if req.question and req.question.strip():
+        # Build an enriched schema (DDL + sample values) server-side rather than
+        # trusting the client-sent schema, so the SQL generator sees real values.
+        try:
+            active_schema = upload_service.get_llm_schema(db_path)
+        except Exception as e:
+            print(f"Falling back to basic schema: {e}")
+            active_schema = req.schema or upload_service.get_database_state(db_path)["schema"]
+
+        # Load recent turns (this upload, this user) so follow-up questions work.
+        history = []
+        try:
+            docs = await db.queries.find(
+                {"uploadId": req.uploadId, "userId": str(current_user["_id"])},
+                {"question": 1, "generatedSQL": 1}
+            ).sort("_id", -1).limit(5).to_list(length=5)
+            history = [
+                {"question": d.get("question"), "generatedSQL": d.get("generatedSQL")}
+                for d in reversed(docs)
+            ]
+        except Exception as e:
+            print(f"Failed to load query history: {e}")
+
         inputs = {
             "question": req.question,
             "schema": active_schema,
             "db_path": local_path,
             "restricted_columns": req.restrictedColumns,
+            "history": history,
             "iterations": 0,
             "valid": False,
             "feedback": None,

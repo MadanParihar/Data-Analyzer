@@ -28,6 +28,8 @@ export interface QueryHistoryItem {
   answer: any[];
   sql: string;
   timestamp: number;
+  feedback?: string | null;
+  validation?: boolean | null;
 }
 
 interface AppState {
@@ -91,6 +93,19 @@ const getInitialState = (): AppState => {
 
 const initialState: AppState = getInitialState();
 
+// Extract a human-readable message from a FastAPI/axios error.
+// FastAPI raises HTTPException as { detail: string | [{ msg }] }; also handle
+// legacy { message }/{ error } and network errors (no response).
+const extractApiError = (error: any, fallback: string): string => {
+  const detail = error?.response?.data?.detail;
+  if (Array.isArray(detail)) return detail[0]?.msg || fallback;
+  if (typeof detail === "string") return detail;
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (error?.response?.data?.error) return error.response.data.error;
+  if (!error?.response) return "Cannot reach server — is the backend running on :5000?";
+  return fallback;
+};
+
 export const uploadDatabase = createAsyncThunk(
   "app/uploadDatabase",
   async (
@@ -125,11 +140,7 @@ export const uploadDatabase = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Failed to upload database"
-      );
+      return rejectWithValue(extractApiError(error, "Failed to upload database"));
     }
   }
 );
@@ -163,11 +174,7 @@ export const appendDatabase = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Failed to append database"
-      );
+      return rejectWithValue(extractApiError(error, "Failed to append database"));
     }
   }
 );
@@ -218,9 +225,7 @@ export const executeQuery = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.error || "Failed to execute query"
-      );
+      return rejectWithValue(extractApiError(error, "Failed to execute query"));
     }
   }
 );
@@ -571,6 +576,8 @@ const appSlice = createSlice({
         answer: action.payload.answer,
         sql: action.payload.generatedSQL,
         timestamp: Date.now(),
+        feedback: action.payload.feedback,
+        validation: action.payload.validation,
       });
       state.question = ""; // Clear input after success
       if (action.payload.databaseState) {
@@ -685,6 +692,14 @@ const appSlice = createSlice({
           };
         });
       }
+
+      // Persist accumulated schema so the added tables survive a reload
+      saveSessionToStorage({
+        currentUploadId: state.currentUploadId,
+        uploadedDbPath: state.uploadedDbPath,
+        schema: state.schema,
+        queryHistory: state.queryHistory,
+      });
     });
     builder.addCase(appendDatabase.rejected, (state, action) => {
       state.loading = "failed";

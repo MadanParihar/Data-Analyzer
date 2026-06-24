@@ -89,6 +89,47 @@ class UploadService:
             print(f"GridFS Restore failed: {e}")
             return False
 
+    def _read_file_to_dataframes(self, file_path: str, original_name: str) -> List[Tuple[str, pd.DataFrame]]:
+        ext = os.path.splitext(original_name)[1].lower()
+        base_name = os.path.splitext(original_name)[0]
+
+        results = []
+        if ext in ['.xlsx', '.xls']:
+            try:
+                # Use a context manager so the file handle is released before the
+                # caller deletes the temp file (avoids WinError 32 on Windows).
+                with pd.ExcelFile(file_path) as xls:
+                    if len(xls.sheet_names) == 1:
+                        table_name = self.sanitize_name(base_name)
+                        df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
+                        results.append((table_name, df))
+                    else:
+                        for sheet in xls.sheet_names:
+                            table_name = self.sanitize_name(f"{base_name}_{sheet}")
+                            df = pd.read_excel(xls, sheet_name=sheet)
+                            results.append((table_name, df))
+            except ImportError as e:
+                # Missing optional engine (openpyxl for .xlsx, xlrd for .xls)
+                engine = "openpyxl" if ext == '.xlsx' else "xlrd"
+                raise RuntimeError(
+                    f"Reading '{original_name}' needs the '{engine}' package, which is not installed "
+                    f"in the backend environment. Install backend requirements (pip install -r requirements.txt)."
+                ) from e
+        elif ext == '.json':
+            table_name = self.sanitize_name(base_name)
+            df = pd.read_json(file_path)
+            if not df.empty:
+                has_nested = any(df[col].apply(lambda x: isinstance(x, (dict, list))).any() for col in df.columns)
+                if has_nested:
+                    df = pd.json_normalize(pd.read_json(file_path).to_dict(orient="records"))
+            results.append((table_name, df))
+        else:
+            table_name = self.sanitize_name(base_name)
+            df = pd.read_csv(file_path)
+            results.append((table_name, df))
+            
+        return results
+
     def _insert_chunk_to_sqlite(self, df: pd.DataFrame, table_name: str, conn: sqlite3.Connection):
         """Helper to clean and insert a dataframe chunk into SQLite."""
         # Clean columns
@@ -102,7 +143,7 @@ class UploadService:
 
     async def process_csv_to_sqlite(self, csv_paths: List[str], original_names: List[str], master_db_path: str = None) -> Tuple[str, List[str]]:
         """
-        Converts list of CSVs to a single SQLite DB using memory-efficient chunking.
+        Converts list of files to a single SQLite DB.
         """
         if not master_db_path:
             timestamp = int(datetime.utcnow().timestamp())
@@ -114,30 +155,50 @@ class UploadService:
         # Optimization PRAGMAs
         conn.execute("PRAGMA synchronous = OFF")
         conn.execute("PRAGMA journal_mode = MEMORY")
-        
+
         table_names = []
 
         try:
-            for csv_path, original_name in zip(csv_paths, original_names):
-                base_name = os.path.splitext(original_name)[0]
-                table_name = self.sanitize_name(base_name)
-                
-                # Use chunksize for memory efficiency
-                chunk_iter = pd.read_csv(csv_path, chunksize=5000)
-                
-                # Drop table if it already exists to emulate 'replace' behavior for the first chunk
-                conn.execute(f'DROP TABLE IF EXISTS "{table_name}"')
-                
-                for chunk in chunk_iter:
-                    self._insert_chunk_to_sqlite(chunk, table_name, conn)
-                
-                table_names.append(table_name)
-                print(f"Processed CSV {original_name} -> {table_name}")
+            # Existing tables in the target DB. When appending to an existing
+            # database we must NOT clobber them — pick a unique name on collision
+            # so old data is always preserved (accumulate).
+            existing = set()
+            try:
+                cur = conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+                )
+                existing = {row[0] for row in cur.fetchall()}
+            except Exception:
+                existing = set()
+
+            for file_path, original_name in zip(csv_paths, original_names):
+                dataframes = self._read_file_to_dataframes(file_path, original_name)
+                for table_name, df in dataframes:
+                    final_name = table_name
+                    suffix = 2
+                    while final_name in existing:
+                        final_name = f"{table_name}_{suffix}"
+                        suffix += 1
+                    existing.add(final_name)
+
+                    df = self._coerce_for_sqlite(df)
+                    df.to_sql(final_name, conn, if_exists='replace', index=False)
+                    table_names.append(final_name)
+                    print(f"Processed {original_name} -> {final_name}")
 
         finally:
             conn.close()
 
         return local_db_path, table_names
+
+    def _coerce_for_sqlite(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Make a DataFrame safe to write to a raw sqlite3 connection.
+        Datetime columns are stored as ISO strings (Python 3.12 removed the
+        default sqlite3 datetime adapters), which keeps dates sortable/filterable."""
+        for col in df.columns:
+            if pd.api.types.is_datetime64_any_dtype(df[col]):
+                df[col] = df[col].astype(str)
+        return df
 
     async def process_excel_to_sqlite(self, excel_paths: List[str], original_names: List[str], master_db_path: str = None) -> Tuple[str, List[str]]:
         """
@@ -206,6 +267,9 @@ class UploadService:
                         if temp_csv_path and os.path.exists(temp_csv_path):
                             os.remove(temp_csv_path)
 
+                # Release the workbook handle so the temp file can be deleted (Windows).
+                xls.close()
+
         finally:
             conn.close()
 
@@ -255,4 +319,57 @@ class UploadService:
 
         finally:
             conn.close()
+
+    @staticmethod
+    def _truncate(value, limit: int = 40) -> str:
+        s = str(value)
+        return s if len(s) <= limit else s[:limit] + "..."
+
+    def get_llm_schema(self, db_path: str, max_columns: int = 40, max_values: int = 5) -> str:
+        """LLM-facing schema: the CREATE TABLE DDL plus a compact block of distinct
+        sample values per column.
+
+        Showing real values lets the model pick correct literals, casing, and date
+        formats in WHERE clauses instead of guessing. Capped to bound size/latency.
+        """
+        local_path = self.get_local_path(db_path)
+        if not os.path.exists(local_path):
+            raise FileNotFoundError(f"Database file not found: {local_path}")
+
+        # Read-only connection — schema introspection never writes.
+        conn = sqlite3.connect(f"file:{local_path}?mode=ro", uri=True)
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND sql IS NOT NULL")
+            ddl = ";\n\n".join(row[0] for row in cursor.fetchall())
+
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+            tables = [row[0] for row in cursor.fetchall()]
+
+            sample_blocks = []
+            for table in tables:
+                cursor.execute(f'PRAGMA table_info("{table}")')
+                columns = [r[1] for r in cursor.fetchall()][:max_columns]
+                lines = []
+                for col in columns:
+                    try:
+                        cursor.execute(
+                            f'SELECT DISTINCT "{col}" FROM "{table}" '
+                            f'WHERE "{col}" IS NOT NULL LIMIT {max_values}'
+                        )
+                        values = [self._truncate(v) for (v,) in cursor.fetchall()]
+                    except Exception:
+                        values = []
+                    if values:
+                        lines.append(f'  - {col}: {", ".join(values)}')
+                if lines:
+                    sample_blocks.append(f'Table "{table}" sample values:\n' + "\n".join(lines))
+
+            if sample_blocks:
+                return ddl + "\n\n-- Sample values --\n" + "\n\n".join(sample_blocks)
+            return ddl
+        finally:
+            conn.close()
+
+
 upload_service = UploadService()

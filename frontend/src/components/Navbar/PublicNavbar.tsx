@@ -37,13 +37,10 @@ const PublicNavbar: React.FC = () => {
             justifyContent: 'space-between',
         }}>
             {/* Left: Brand */}
-            <div 
-                onClick={() => navigate('/')}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-            >
-                <Database size={32} color="var(--accent-primary)" />
-                <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-                    DataAnalyser<span style={{ color: 'var(--accent-primary)' }}>.</span>
+            <div className="brand" onClick={() => navigate('/')}>
+                <div className="brand-badge"><Database size={18} /></div>
+                <span className="brand-name">
+                    DataAnalyser<span>.</span>
                 </span>
             </div>
 

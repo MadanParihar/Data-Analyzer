@@ -1,0 +1,17 @@
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+uploads/
+.env
+*.log
+test_*.py
+test_*.xlsx
+test_*.json
+test_large_data.xlsx
+*.sqlite
+*.sqlite3
+*.db
+.git
+.gitignore

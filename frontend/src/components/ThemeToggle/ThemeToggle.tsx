@@ -12,14 +12,11 @@ const ThemeToggle: React.FC = () => {
             aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
         >
-            <div className="icon-container">
-                {theme === 'light' ? (
-                    <Moon size={18} className="theme-icon moon" />
-                ) : (
-                    <Sun size={18} className="theme-icon sun" />
-                )}
-            </div>
-            <span className="toggle-text">{theme === 'light' ? 'Dark' : 'Light'}</span>
+            {theme === 'light' ? (
+                <Moon size={17} className="theme-icon moon" />
+            ) : (
+                <Sun size={17} className="theme-icon sun" />
+            )}
         </button>
     );
 };

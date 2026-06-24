@@ -10,6 +10,9 @@ PyObjectId = Annotated[str, BeforeValidator(str)]
 class UserBase(BaseModel):
     email: EmailStr
 
+class UserLogin(UserBase):
+    password: str
+
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
 
@@ -29,7 +32,6 @@ class UserCreate(UserBase):
 class UserInDB(UserBase):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     hashed_password: str
-    is_verified: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
@@ -38,7 +40,6 @@ class UserInDB(UserBase):
 
 class UserResponse(UserBase):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
-    is_verified: bool = False
-    
+
     class Config:
         populate_by_name = True

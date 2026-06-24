@@ -20,7 +20,7 @@
         overflow: visible !important;
         margin: 0 !important;
         padding: 0 !important;
-        background-color: #01091a !important;
+        background-color: #09090b !important;
     }
 
     /* Hide Navbar and Sidebar explicitly */
@@ -54,7 +54,7 @@
     }
 
     .printable-dashboard-page {
-        background-color: #01091a !important;
+        background-color: #09090b !important;
         color: #f8fafc !important;
 
         width: 1280px !important;
@@ -81,9 +81,9 @@
     }
 
     .printable-dashboard-page .dashboard-card-inner {
-        background-color: #051329 !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        color: #f8fafc !important;
+        background-color: #18181b !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        color: #fafafa !important;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -148,13 +148,11 @@
 }
 
 .printable-dashboard-page .dashboard-card-inner {
-    /* Glassmorphism from index.css logic */
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
     padding: 16px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-xs);
     flex: 1;
     display: flex;
     flex-direction: column;
